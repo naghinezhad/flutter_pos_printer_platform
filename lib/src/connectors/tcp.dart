@@ -29,7 +29,7 @@ class TcpPrinterInfo {
 
 class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
   TcpPrinterConnector._();
-  static TcpPrinterConnector _instance = TcpPrinterConnector._();
+  static final TcpPrinterConnector _instance = TcpPrinterConnector._();
 
   static TcpPrinterConnector get instance => _instance;
 
@@ -38,9 +38,11 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
   TCPStatus status = TCPStatus.none;
 
   Stream<TCPStatus> get _statusStream => _statusStreamController.stream;
-  final StreamController<TCPStatus> _statusStreamController = StreamController.broadcast();
+  final StreamController<TCPStatus> _statusStreamController =
+      StreamController.broadcast();
 
-  static Future<List<PrinterDiscovered<TcpPrinterInfo>>> discoverPrinters({String? ipAddress, int? port, Duration? timeOut}) async {
+  static Future<List<PrinterDiscovered<TcpPrinterInfo>>> discoverPrinters(
+      {String? ipAddress, int? port, Duration? timeOut}) async {
     final List<PrinterDiscovered<TcpPrinterInfo>> result = [];
     final defaultPort = port ?? 9100;
 
@@ -56,12 +58,14 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
     final stream = NetworkAnalyzer.discover2(
       subnet,
       defaultPort,
-      timeout: timeOut ?? Duration(milliseconds: 4000),
+      timeout: timeOut ?? const Duration(milliseconds: 4000),
     );
 
     await for (var addr in stream) {
       if (addr.exists) {
-        result.add(PrinterDiscovered<TcpPrinterInfo>(name: "${addr.ip}:$defaultPort", detail: TcpPrinterInfo(address: addr.ip)));
+        result.add(PrinterDiscovered<TcpPrinterInfo>(
+            name: "${addr.ip}:$defaultPort",
+            detail: TcpPrinterInfo(address: addr.ip)));
       }
     }
 
@@ -89,7 +93,8 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
 
       await for (var data in stream.map((message) => message)) {
         if (data.exists) {
-          yield PrinterDevice(name: "${data.ip}:$defaultPort", address: data.ip);
+          yield PrinterDevice(
+              name: "${data.ip}:$defaultPort", address: data.ip);
         }
       }
     } catch (e) {}
@@ -100,7 +105,7 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
     try {
       // final _socket = await Socket.connect(_host, _port, timeout: _timeout);
       _socket?.add(Uint8List.fromList(bytes));
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 100));
       // await _socket?.flush();
       // _socket?.destroy();
       return true;
@@ -112,7 +117,8 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
 
   @override
   Future<bool> connect(TcpPrinterInput model) async {
-    _socket = await Socket.connect(model.ipAddress, model.port, timeout: model.timeout);
+    _socket = await Socket.connect(model.ipAddress, model.port,
+        timeout: model.timeout);
     debugPrint('socket connected'); //if opened you will get it here
     listenSocket();
     return true;
@@ -121,13 +127,14 @@ class TcpPrinterConnector implements PrinterConnector<TcpPrinterInput> {
   Future<bool> connectAndKeep(TcpPrinterInput model) async {
     try {
       if (status == TCPStatus.none) {
-        _socket = await Socket.connect(model.ipAddress, model.port, timeout: model.timeout);
+        _socket = await Socket.connect(model.ipAddress, model.port,
+            timeout: model.timeout);
         status = TCPStatus.connected;
         debugPrint('socket connected'); //if opened you will get it here
         _statusStreamController.add(status);
 
         // Create ping object with desired args
-        final ping = Ping('${model.ipAddress}', interval: 3, timeout: 7);
+        final ping = Ping(model.ipAddress, interval: 3, timeout: 7);
 
         // Begin ping process and listen for output
         ping.stream.listen((PingData data) {

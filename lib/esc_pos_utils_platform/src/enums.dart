@@ -7,8 +7,11 @@
  */
 
 enum PosAlign { left, center, right }
+
 enum PosCutMode { full, partial }
+
 enum PosFontType { fontA, fontB }
+
 enum PosDrawer { pin2, pin5 }
 
 /// Choose image printing function

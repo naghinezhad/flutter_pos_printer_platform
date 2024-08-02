@@ -50,7 +50,7 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
       : vendorId = '',
         productId = '',
         name = '' {
-    if (Platform.isAndroid)
+    if (Platform.isAndroid) {
       flutterPrinterEventChannelUSB.receiveBroadcastStream().listen((data) {
         if (data is int) {
           // log('Received event status usb: $data');
@@ -58,16 +58,19 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
           _statusStreamController.add(_status);
         }
       });
+    }
   }
 
-  static UsbPrinterConnector _instance = UsbPrinterConnector._();
+  static final UsbPrinterConnector _instance = UsbPrinterConnector._();
 
   static UsbPrinterConnector get instance => _instance;
 
   Stream<USBStatus> get _statusStream => _statusStreamController.stream;
-  final StreamController<USBStatus> _statusStreamController = StreamController.broadcast();
+  final StreamController<USBStatus> _statusStreamController =
+      StreamController.broadcast();
 
-  UsbPrinterConnector.Android({required this.vendorId, required this.productId}) : name = '';
+  UsbPrinterConnector.Android({required this.vendorId, required this.productId})
+      : name = '';
   UsbPrinterConnector.Windows({required this.name})
       : vendorId = '',
         productId = '';
@@ -91,10 +94,11 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
 
   static DiscoverResult<UsbPrinterInfo> discoverPrinters() async {
     if (Platform.isAndroid) {
-      final List<dynamic> results = await flutterPrinterChannel.invokeMethod('getList');
+      final List<dynamic> results =
+          await flutterPrinterChannel.invokeMethod('getList');
       return results
           .map((dynamic r) => PrinterDiscovered<UsbPrinterInfo>(
-                name: r['product'] == null ? 'unknown' : r['product'],
+                name: r['product'] ?? 'unknown',
                 detail: UsbPrinterInfo.Android(
                   vendorId: r['vendorId'],
                   productId: r['productId'],
@@ -107,11 +111,15 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
           .toList();
     }
     if (Platform.isWindows) {
-      final List<dynamic> results = await flutterPrinterChannel.invokeMethod('getList');
+      final List<dynamic> results =
+          await flutterPrinterChannel.invokeMethod('getList');
       return results
           .map((dynamic result) => PrinterDiscovered<UsbPrinterInfo>(
                 name: result['name'],
-                detail: UsbPrinterInfo.Windows(isDefault: result['default'], name: result['name'], model: result['model']),
+                detail: UsbPrinterInfo.Windows(
+                    isDefault: result['default'],
+                    name: result['name'],
+                    model: result['model']),
               ))
           .toList();
     }
@@ -120,18 +128,20 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
 
   Stream<PrinterDevice> discovery() async* {
     if (Platform.isAndroid) {
-      final List<dynamic> results = await flutterPrinterChannel.invokeMethod('getList');
+      final List<dynamic> results =
+          await flutterPrinterChannel.invokeMethod('getList');
       for (final device in results) {
         var r = await device;
         yield PrinterDevice(
-          name: r['product'] == null ? 'unknown' : r['product'],
+          name: r['product'] ?? 'unknown',
           vendorId: r['vendorId'],
           productId: r['productId'],
           // name: r['name'],
         );
       }
     } else if (Platform.isWindows) {
-      final List<dynamic> results = await flutterPrinterChannel.invokeMethod('getList');
+      final List<dynamic> results =
+          await flutterPrinterChannel.invokeMethod('getList');
       for (final device in results) {
         var r = await device;
         yield PrinterDevice(
@@ -144,17 +154,27 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
 
   Future<bool> _connect({UsbPrinterInput? model}) async {
     if (Platform.isAndroid) {
-      Map<String, dynamic> params = {"vendor": int.parse(model?.vendorId ?? vendorId), "product": int.parse(model?.productId ?? productId)};
+      Map<String, dynamic> params = {
+        "vendor": int.parse(model?.vendorId ?? vendorId),
+        "product": int.parse(model?.productId ?? productId)
+      };
       return await flutterPrinterChannel.invokeMethod('connectPrinter', params);
     } else if (Platform.isWindows) {
       Map<String, dynamic> params = {"name": model?.name ?? name};
-      return await flutterPrinterChannel.invokeMethod('connectPrinter', params) == 1 ? true : false;
+      return await flutterPrinterChannel.invokeMethod(
+                  'connectPrinter', params) ==
+              1
+          ? true
+          : false;
     }
     return false;
   }
 
   Future<bool> _close() async {
-    if (Platform.isWindows) return await flutterPrinterChannel.invokeMethod('close') == 1 ? true : false;
+    if (Platform.isWindows)
+      return await flutterPrinterChannel.invokeMethod('close') == 1
+          ? true
+          : false;
     return false;
   }
 
@@ -178,7 +198,7 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
 
   @override
   Future<bool> send(List<int> bytes) async {
-    if (Platform.isAndroid)
+    if (Platform.isAndroid) {
       try {
         // final connected = await _connect();
         // if (!connected) return false;
@@ -187,10 +207,13 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
       } catch (e) {
         return false;
       }
-    else if (Platform.isWindows)
+    } else if (Platform.isWindows)
       try {
         Map<String, dynamic> params = {"bytes": Uint8List.fromList(bytes)};
-        return await flutterPrinterChannel.invokeMethod('printBytes', params) == 1 ? true : false;
+        return await flutterPrinterChannel.invokeMethod('printBytes', params) ==
+                1
+            ? true
+            : false;
       } catch (e) {
         await this._close();
         return false;

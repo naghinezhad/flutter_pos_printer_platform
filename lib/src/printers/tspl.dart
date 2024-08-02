@@ -16,34 +16,34 @@ class ImageRaster {
 class Command {
   Command();
 
-  static final String SIZE = "SIZE";
-  static final String GAP = "GAP";
-  static final String REFERENCE = "REFERENCE";
-  static final String DIRECTION = "DIRECTION";
-  static final String OFFSET = "OFFSET";
-  static final String SHIFT = "SHIFT";
+  static const String SIZE = "SIZE";
+  static const String GAP = "GAP";
+  static const String REFERENCE = "REFERENCE";
+  static const String DIRECTION = "DIRECTION";
+  static const String OFFSET = "OFFSET";
+  static const String SHIFT = "SHIFT";
 
   // Action command
-  static final String BEEP = "BEEP";
-  static final String BITMAP = "BITMAP";
-  static final String REVERSE = "REVERSE";
-  static final String PRINT = "PRINT";
+  static const String BEEP = "BEEP";
+  static const String BITMAP = "BITMAP";
+  static const String REVERSE = "REVERSE";
+  static const String PRINT = "PRINT";
   static final List<int> SET_IP = [0x1f, 0x1b, 0x1f, 0x91, 0x00, 0x49, 0x50];
-  static final String SELF_TEST_ETHERNET = "SELFTEST ETHERNET";
+  static const String SELF_TEST_ETHERNET = "SELFTEST ETHERNET";
 
-  static final String CLS = "CLS";
-  static final String EOP = "EOP";
+  static const String CLS = "CLS";
+  static const String EOP = "EOP";
 
-  static final String MILLIMETER = "mm";
-  static final String DOT = "dot";
-  static final String INCH = "";
-  static final String SPACE = " ";
-  static final String EOL = "\r\n";
+  static const String MILLIMETER = "mm";
+  static const String DOT = "dot";
+  static const String INCH = "";
+  static const String SPACE = " ";
+  static const String EOL = "\r\n";
   static final List<int> EOL_HEX = [0x0d, 0x0a];
-  static final String COMMA = ",";
+  static const String COMMA = ",";
 
-  static final int DPI200 = 8;
-  static final int DPI300 = 12;
+  static const int DPI200 = 8;
+  static const int DPI300 = 12;
 
   static String setSize(String w, String h, String unit) {
     return createLine(SIZE, [w + unit, h + unit]);
@@ -69,11 +69,14 @@ class Command {
     return createLine(SHIFT, [shiftLeft, shiftTop]);
   }
 
-  static String imageString(String x, String y, String widthByte, String heightDot, {String mode = "0"}) {
+  static String imageString(
+      String x, String y, String widthByte, String heightDot,
+      {String mode = "0"}) {
     return createString(BITMAP, [x, y, widthByte, heightDot, mode, ""]);
   }
 
-  static String reverse(String x, String y, String widthByte, String heightDot) {
+  static String reverse(
+      String x, String y, String widthByte, String heightDot) {
     return createLine(REVERSE, [x, y, widthByte, heightDot]);
   }
 
@@ -108,8 +111,8 @@ class Command {
 
 class TsplPrinter<T> extends GenericPrinter<T> {
   TsplPrinter(
-    PrinterConnector<T> connector,
-    T model, {
+    super.connector,
+    super.model, {
     String unit = "mm",
     String sizeWidth = "35",
     String sizeHeight = "25",
@@ -123,7 +126,7 @@ class TsplPrinter<T> extends GenericPrinter<T> {
     String shiftLeft = "0",
     String shiftTop = "0",
     this.dpi = "200",
-  }) : super(connector, model) {
+  }) {
     this._unit = unit;
     this._sizeWidth = sizeWidth;
     this._sizeHeight = sizeHeight;
@@ -164,14 +167,18 @@ class TsplPrinter<T> extends GenericPrinter<T> {
   @override
   Future<bool> beep() async {
     return await sendToConnector(() {
-      return [Command.clearCache(), Command.beep(), Command.close()].join().codeUnits;
+      return [Command.clearCache(), Command.beep(), Command.close()]
+          .join()
+          .codeUnits;
     });
   }
 
   @override
   Future<bool> selfTest() async {
     return await sendToConnector(() {
-      return [Command.clearCache(), Command.selfTest(), Command.close()].join().codeUnits;
+      return [Command.clearCache(), Command.selfTest(), Command.close()]
+          .join()
+          .codeUnits;
     });
   }
 
@@ -184,17 +191,23 @@ class TsplPrinter<T> extends GenericPrinter<T> {
   Future<bool> image(Uint8List image, {int threshold = 150}) async {
     final decodedImage = img.decodeImage(image)!;
     final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
-    final converted = toPixel(ImageData(width: decodedImage.width, height: decodedImage.height),
-        paperWidth: int.parse(_sizeWidth), dpi: int.parse(dpi), isTspl: true);
+    final converted = toPixel(
+        ImageData(width: decodedImage.width, height: decodedImage.height),
+        paperWidth: int.parse(_sizeWidth),
+        dpi: int.parse(dpi),
+        isTspl: true);
 
     final ms = 1000 + (converted.height * 0.5).toInt();
 
     return await sendToConnector(() {
-      if (image.length > 0) {
+      if (image.isNotEmpty) {
         List<int> buffer = [];
         buffer += this._config.codeUnits;
         buffer += Command.clearCache().codeUnits;
-        buffer += Command.imageString('0', '0', converted.width.toString(), converted.height.toString(), mode: '0').codeUnits;
+        buffer += Command.imageString('0', '0', converted.width.toString(),
+                converted.height.toString(),
+                mode: '0')
+            .codeUnits;
         buffer += rasterizeImage.data;
         buffer += Command.EOL_HEX;
         buffer += Command.printIt('1', repeat: '1').codeUnits;
@@ -213,7 +226,9 @@ class TsplPrinter<T> extends GenericPrinter<T> {
     // height 25mm = 200px
     final int multiplier = dpi == 200 ? 8 : 12;
     final img.Image image = img.copyResize(imgSrc,
-        width: int.parse(this._sizeWidth) * multiplier, height: int.parse(this._sizeHeight) * multiplier, interpolation: img.Interpolation.linear);
+        width: int.parse(this._sizeWidth) * multiplier,
+        height: int.parse(this._sizeHeight) * multiplier,
+        interpolation: img.Interpolation.linear);
     final int widthPx = image.width;
     final int heightPx = image.height;
     final int widthBytes = widthPx ~/ 8; // one byte is 8 bits
@@ -221,7 +236,10 @@ class TsplPrinter<T> extends GenericPrinter<T> {
 
     List<int> monoPixel = [];
     for (int i = 0; i < imageBytes.length; i += 4) {
-      bool shouldBeWhite = imageBytes[i + 3] == 0 || (imageBytes[i] > 100 && imageBytes[i + 1] > 100 && imageBytes[i + 2] > 100);
+      bool shouldBeWhite = imageBytes[i + 3] == 0 ||
+          (imageBytes[i] > 100 &&
+              imageBytes[i + 1] > 100 &&
+              imageBytes[i + 2] > 100);
       monoPixel.add(shouldBeWhite ? 1 : 0);
     }
 
@@ -234,7 +252,10 @@ class TsplPrinter<T> extends GenericPrinter<T> {
       }
     }
 
-    return new ImageRaster(data: rasterizeImage, width: widthBytes.toString(), height: heightPx.toString());
+    return ImageRaster(
+        data: rasterizeImage,
+        width: widthBytes.toString(),
+        height: heightPx.toString());
   }
 
   @override

@@ -8,7 +8,8 @@ abstract class FlutterPosPrinterPlatformPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static FlutterPosPrinterPlatformPlatform _instance = MethodChannelFlutterPosPrinterPlatform();
+  static FlutterPosPrinterPlatformPlatform _instance =
+      MethodChannelFlutterPosPrinterPlatform();
 
   /// The default instance of [FlutterPosPrinterPlatformPlatform] to use.
   ///

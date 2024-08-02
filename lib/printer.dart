@@ -1,10 +1,13 @@
 import 'package:flutter/services.dart';
 
-final flutterPrinterChannel = const MethodChannel('com.example.flutter_pos_printer_platform');
-final flutterPrinterEventChannelBT = const EventChannel('com.example.flutter_pos_printer_platform/bt_state');
-final flutterPrinterEventChannelUSB = const EventChannel('com.example.flutter_pos_printer_platform/usb_state');
-final iosChannel = const MethodChannel('flutter_pos_printer_platform/methods');
-final iosStateChannel = const EventChannel('flutter_pos_printer_platform/state');
+const flutterPrinterChannel =
+    MethodChannel('com.example.flutter_pos_printer_platform');
+const flutterPrinterEventChannelBT =
+    EventChannel('com.example.flutter_pos_printer_platform/bt_state');
+const flutterPrinterEventChannelUSB =
+    EventChannel('com.example.flutter_pos_printer_platform/usb_state');
+const iosChannel = MethodChannel('flutter_pos_printer_platform/methods');
+const iosStateChannel = EventChannel('flutter_pos_printer_platform/state');
 
 enum BTStatus { none, connecting, connected, scanning, stopScanning }
 
@@ -22,7 +25,6 @@ abstract class Printer {
 
 abstract class BasePrinterInput {}
 
-//
 abstract class PrinterConnector<T> {
   Future<bool> send(List<int> bytes);
   Future<bool> connect(T model);
